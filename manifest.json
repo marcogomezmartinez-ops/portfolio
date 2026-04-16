@@ -1,0 +1,24 @@
+{
+  "name": "Portfolio Dashboard",
+  "short_name": "Portfolio",
+  "description": "Dashboard de gestión de carteras de inversión",
+  "start_url": "./portfolio-dashboard.html",
+  "display": "standalone",
+  "background_color": "#0a0e17",
+  "theme_color": "#0a0e17",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%230a0e17' width='192' height='192' rx='40'/><text x='96' y='140' font-size='100' text-anchor='middle' fill='%2300ff88'>📊</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect fill='%230a0e17' width='512' height='512' rx='100'/><text x='256' y='380' font-size='280' text-anchor='middle' fill='%2300ff88'>📊</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
