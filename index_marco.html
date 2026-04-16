@@ -1,0 +1,2480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0e17">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Dashboard Financiero v2.1</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg: #0a0e17;
+            --card: #141821;
+            --hover: #1a1f2e;
+            --accent: #00ff88;
+            --danger: #ff4466;
+            --warning: #ffaa00;
+            --text: #e8edf4;
+            --dim: #8b95a8;
+            --border: #2a3142;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 1rem; }
+        
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--dim);
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+        }
+
+        .tab {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--dim);
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: var(--accent);
+            color: var(--bg);
+            border-color: var(--accent);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Cards */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+        }
+
+        .card-label {
+            font-size: 0.75rem;
+            color: var(--dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .card-change {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .positive { color: var(--accent); }
+        .negative { color: var(--danger); }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--hover);
+            font-size: 0.75rem;
+            color: var(--dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: var(--hover); }
+
+        .editable {
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .editable:hover {
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        input[type="number"], input[type="text"], input[type="date"] {
+            background: var(--hover);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-family: inherit;
+            width: 100%;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        /* Buttons */
+        .btn {
+            background: var(--accent);
+            color: var(--bg);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--accent);
+        }
+
+        .btn-secondary {
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active { display: flex; }
+
+        .modal-content {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--dim);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Charts */
+        canvas {
+            max-height: 300px;
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            h1 {
+                font-size: 1.25rem;
+            }
+            
+            table {
+                font-size: 0.85rem;
+            }
+            
+            th, td {
+                padding: 0.75rem 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💰 Dashboard Financiero</h1>
+            <div class="status">
+                <div class="live-dot"></div>
+                <span id="lastUpdate">En vivo</span>
+            </div>
+        </header>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab(0)">📊 Cartera</button>
+            <button class="tab" onclick="switchTab(1)">💰 Finanzas</button>
+            <button class="tab" onclick="switchTab(2)">📈 Patrimonio</button>
+            <button class="tab" onclick="switchTab(3)">📉 Histórico</button>
+            <button class="tab" onclick="switchTab(4)">📈 Evolución</button>
+        </div>
+
+        <!-- Tab 1: Cartera -->
+        <div class="tab-content active" id="tab0">
+            <div class="cards">
+                <div class="card">
+                    <div class="card-label">Patrimonio Total</div>
+                    <div class="card-value positive" id="netWorthPortfolio">€0</div>
+                    <div class="card-change" style="color:var(--dim)" id="netWorthBreakdown">Inversiones + Efectivo</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">Valor Cartera</div>
+                    <div class="card-value" id="totalValue">€0</div>
+                    <div class="card-change positive" id="totalChange">+0%</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">Rentabilidad</div>
+                    <div class="card-value" id="totalReturn">€0</div>
+                    <div class="card-change positive" id="returnPct">+0%</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">Rentabilidad Anual Esperada</div>
+                    <div class="card-value positive" id="expectedReturn">0%</div>
+                    <div class="card-change" style="color:var(--dim)" id="expectedReturnNote">Basada en composición</div>
+                </div>
+            </div>
+
+            <div style="display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center">
+                <label class="btn btn-secondary" style="cursor:pointer;margin:0">
+                    📁 Actualizar desde CSV
+                    <input type="file" accept=".csv" onchange="uploadPortfolioCSV(event)" style="display:none">
+                </label>
+                <button class="btn btn-secondary" onclick="updateFundPrices()" id="updateFundsBtn">🔄 Actualizar Fondos</button>
+                <span id="fundUpdateStatus" style="color:var(--dim);font-size:0.875rem"></span>
+            </div>
+
+            <div class="card" style="margin-bottom:1rem">
+                <h3 style="margin-bottom:1rem">Distribución de Inversiones</h3>
+                <canvas id="distributionChart"></canvas>
+            </div>
+
+            <div class="card" style="margin-bottom:1rem">
+                <h3 style="margin-bottom:1rem">Patrimonio Total</h3>
+                <canvas id="patrimonyChart"></canvas>
+            </div>
+
+            <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+                    <h3 style="margin:0">Mis Activos</h3>
+                    <button class="btn" onclick="openAddAssetModal()">+ Añadir</button>
+                </div>
+                <table id="portfolioTable">
+                    <thead>
+                        <tr>
+                            <th>Activo</th>
+                            <th>Cantidad</th>
+                            <th>Precio</th>
+                            <th>Valor</th>
+                            <th>Rent. %</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="portfolioBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab 1: Finanzas (was tab2) -->
+        <div class="tab-content" id="tab1">
+            <div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap">
+                <button class="btn" onclick="openModal('income')">+ Ingreso</button>
+                <button class="btn btn-danger" onclick="openModal('expense')">- Gasto</button>
+                <label class="btn btn-secondary" style="cursor:pointer">
+                    📁 Subir CSV
+                    <input type="file" accept=".csv" onchange="uploadCSV(event)" style="display:none">
+                </label>
+            </div>
+
+            <div class="cards">
+                <div class="card">
+                    <div class="card-label">Ingresos Este Mes</div>
+                    <div class="card-value positive" id="incomeThisMonth">€0</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">Gastos Este Mes</div>
+                    <div class="card-value negative" id="expensesThisMonth">€0</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">Ingresos Este Año</div>
+                    <div class="card-value positive" id="incomeThisYear">€0</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">Gastos Este Año</div>
+                    <div class="card-value negative" id="expensesThisYear">€0</div>
+                </div>
+            </div>
+
+            <!-- Selector de periodo -->
+            <div class="card" style="margin-bottom:1rem">
+                <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+                    <select id="periodSelector" onchange="renderFinances()" style="padding:0.5rem;background:var(--hover);border:1px solid var(--border);color:var(--text);border-radius:4px">
+                        <option value="all">Todo el tiempo</option>
+                        <option value="year">Por año</option>
+                        <option value="month" selected>Por mes</option>
+                    </select>
+                    <select id="yearSelector" onchange="renderFinances()" style="padding:0.5rem;background:var(--hover);border:1px solid var(--border);color:var(--text);border-radius:4px"></select>
+                    <select id="monthSelector" onchange="renderFinances()" style="padding:0.5rem;background:var(--hover);border:1px solid var(--border);color:var(--text);border-radius:4px;display:none"></select>
+                </div>
+            </div>
+
+            <div class="card" style="margin-bottom:1.5rem">
+                <canvas id="incomeExpensesChart"></canvas>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom:1rem">Historial <span id="periodLabel"></span></h3>
+                <div style="margin-bottom:1rem;display:flex;gap:1rem">
+                    <div>
+                        <strong>Ingresos:</strong> <span class="positive" id="periodIncome">€0</span>
+                    </div>
+                    <div>
+                        <strong>Gastos:</strong> <span class="negative" id="periodExpenses">€0</span>
+                    </div>
+                    <div>
+                        <strong>Balance:</strong> <span id="periodBalance">€0</span>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Concepto</th>
+                            <th>Tipo</th>
+                            <th>Importe</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab 2: Patrimonio (was tab1) -->
+        <div class="tab-content" id="tab2">
+            <div class="cards">
+                <div class="card">
+                    <div class="card-label">Patrimonio Total</div>
+                    <div class="card-value positive" id="netWorth">€0</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">Inversiones</div>
+                    <div class="card-value" id="investments">€0</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">Bancos</div>
+                    <div class="card-value editable" id="banks" onclick="editBanks()">€0</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">Liquidez</div>
+                    <div class="card-value editable" id="cash" onclick="editCash()">€0</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">Efectivo</div>
+                    <div class="card-value editable" id="efectivo" onclick="editEfectivo()">€0</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom:1rem">Desglose Detallado</h3>
+                <canvas id="detailedBreakdownChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Tab 4: Histórico -->
+        <div class="tab-content" id="tab3">
+            <div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap">
+                <button class="btn" onclick="addHistoricalPoint()">+ Registrar Patrimonio Actual</button>
+                <button class="btn btn-secondary" onclick="addManualPoint()">+ Añadir Fecha Pasada</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('importHistCSV').click()">📤 Importar CSV</button>
+                <input type="file" id="importHistCSV" accept=".csv" style="display:none" onchange="uploadHistoricalCSV(event)">
+                <button class="btn btn-secondary" onclick="exportHistoricalCSV()">📥 Exportar CSV</button>
+            </div>
+
+            <div class="card" style="margin-bottom:1.5rem">
+                <h3 style="margin-bottom:1rem">Evolución del Patrimonio</h3>
+                <canvas id="historicalChart"></canvas>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom:1rem">Historial de Registros</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Patrimonio</th>
+                            <th>Variación</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="historicalBody"></tbody>
+                </table>
+            </div>
+
+            <div class="card" id="assetPerformanceCard" style="display:none">
+                <h3 style="margin-bottom:0.5rem">📊 Rentabilidad por Activo</h3>
+                <p style="color:var(--dim);font-size:0.875rem;margin-bottom:1rem">
+                    % sobre precio de compra fiscal en cada fecha registrada
+                </p>
+                <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem" id="assetFilterBtns"></div>
+                <div style="position:relative;height:300px">
+                    <canvas id="assetPerformanceChart"></canvas>
+                </div>
+                <div id="assetPerformanceTable" style="margin-top:1rem;overflow-x:auto"></div>
+            </div>
+        </div>
+
+        <!-- Tab 5: Evolución -->
+        <div class="tab-content" id="tab4">
+            <div style="margin-bottom:1.5rem">
+                <h2 style="margin-bottom:0.5rem">📈 Evolución de Activos</h2>
+                <p style="color:var(--dim);margin:0">Historial de precios y rendimiento real</p>
+            </div>
+
+            <div class="card" style="margin-bottom:1.5rem">
+                <h3 style="margin-bottom:1rem">➕ Añadir Precio Manual</h3>
+                <div style="display:grid;gap:1rem">
+                    <div class="form-group">
+                        <label>Activo</label>
+                        <select id="quickPriceAsset" class="input">
+                            <option value="">Selecciona un activo...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha</label>
+                        <input type="date" id="quickPriceDate" class="input">
+                    </div>
+                    <div class="form-group">
+                        <label>Precio (€)</label>
+                        <input type="number" id="quickPriceValue" class="input" step="0.01" placeholder="Ej: 125.50">
+                    </div>
+                    <button class="btn" onclick="saveQuickPrice()">💾 Guardar Precio</button>
+                </div>
+            </div>
+
+            <div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap">
+                <button class="btn" onclick="registerTodayPrices()">📅 Registrar Precios Hoy</button>
+                <label class="btn btn-secondary" style="cursor:pointer;margin:0">
+                    📤 Importar CSV
+                    <input type="file" accept=".csv" onchange="importPriceHistory(event)" style="display:none">
+                </label>
+                <button class="btn btn-secondary" onclick="exportPriceHistory()">📥 Exportar CSV</button>
+            </div>
+
+            <div id="evolutionCharts"></div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Nueva Transacción</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="transactionForm" onsubmit="saveTransaction(event)">
+                <div class="form-group">
+                    <label>Concepto</label>
+                    <input type="text" id="concept" required>
+                </div>
+                <div class="form-group">
+                    <label>Importe (€)</label>
+                    <input type="number" step="0.01" id="amount" required>
+                </div>
+                <div class="form-group">
+                    <label>Fecha</label>
+                    <input type="date" id="date" required>
+                </div>
+                <input type="hidden" id="transactionType">
+                <button type="submit" class="btn" style="width:100%">Guardar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Data structures
+        let portfolio = [];
+        let transactions = [];
+        let cashAmount = 0;
+        let banksAmount = 0;
+        let efectivoAmount = 0;
+        let historicalData = [];
+        let priceHistory = {}; // {assetName: [{date, price}]}
+        let charts = {};
+
+        // Load data
+        loadData();
+        
+        // Start live updates
+        setInterval(updateLivePrices, 5 * 60 * 1000); // Every 5 min
+        updateLivePrices(); // Initial update
+
+        function loadData() {
+            // FORZAR CARGA CON TUS DATOS CORRECTOS - Versión 6.0
+            // Si no hay datos o la versión es antigua, cargar portfolio precargado
+            const saved = localStorage.getItem('financialData');
+            let forceLoad = false;
+            
+            if (saved) {
+                const data = JSON.parse(saved);
+                const version = data.version || 1.0;
+                
+                // Si versión < 6.0 o portfolio vacío, forzar recarga
+                if (version < 9.0 || !data.portfolio || data.portfolio.length === 0) {
+                    forceLoad = true;
+                }
+            } else {
+                forceLoad = true;
+            }
+            
+            if (forceLoad) {
+                // TU PORTFOLIO COMPLETO - 9 activos con datos exactos de Morningstar (16/04/2026)
+                // Total: €17,263.88 | Invertido: €17,056.90 | Rentabilidad: +€206.98 (+1.21%)
+                // PORTFOLIO MARCO - 9 activos | Coste fiscal real (con traspasos)
+                // Valor: €17,262.60 | Invertido fiscal: €17,057.06 | Rentabilidad: +1.21%
+                portfolio = [
+                    {name:'Gamma Global FI',isin:'ES0140794001',type:'Renta Mixta',qty:375.445466,buy:13.31996,current:13.67134,ticker:''},
+                    {name:'Avantage Fund B',isin:'ES0112231016',type:'Renta Mixta',qty:171.477127,buy:29.21888,current:29.32158,ticker:''},
+                    {name:'DNCA Alpha Bonds',isin:'LU1694789451',type:'Renta Fija',qty:19.2085,buy:130.14967,current:130.52,ticker:''},
+                    {name:'iShares Developed World',isin:'IE000ZYRH0Q7',type:'Renta Variable',qty:113.57,buy:10.73681,current:10.947,ticker:'SWDA.L'},
+                    {name:'iShares Emerging Markets',isin:'IE000QAZP7L2',type:'Renta Variable',qty:24.15,buy:11.44762,current:12.339,ticker:'EIMI.L'},
+                    {name:'Sigma Internacional',isin:'ES0175902008',type:'Renta Variable',qty:14.039623,buy:19.58742,current:19.81392,ticker:''},
+                    {name:'iShares Physical Gold',isin:'IE00B4ND3602',type:'Oro',qty:26,buy:79.81,current:79.335,ticker:'IGLN.L'},
+                    {name:'Tesla',isin:'US88160R1014',type:'Acciones',qty:0.543552,buy:369.67944,current:330.70,ticker:'TSLA'},
+                    {name:'Bitcoin',isin:'BTC',type:'Cripto',qty:0.00842437,buy:59226.98077,current:63246,ticker:'BTC'}
+                ];
+                transactions = [];
+                cashAmount = 0;
+                banksAmount = 0;
+                efectivoAmount = 0;
+                historicalData = [
+                    {date:"2025-01-01",amount:16800.00},
+                    {date:"2025-12-31",amount:17057.06},
+                    {date:"2026-04-16",amount:17262.60}
+                ];
+                priceHistory = {
+                    "iShares Developed World": [
+                        {date:"2025-01-01",price:9.687},{date:"2025-12-31",price:10.5462},
+                        {date:"2026-04-16",price:10.947}
+                    ],
+                    "iShares Emerging Markets": [
+                        {date:"2025-01-01",price:11.2902},{date:"2025-12-31",price:11.656},
+                        {date:"2026-04-16",price:12.339}
+                    ],
+                    "Gamma Global FI": [
+                        {date:"2025-01-01",price:12.9053},{date:"2025-12-31",price:13.0989},
+                        {date:"2026-04-16",price:13.67134}
+                    ],
+                    "Avantage Fund B": [
+                        {date:"2025-01-01",price:27.5995},{date:"2025-12-31",price:28.6455},
+                        {date:"2026-04-16",price:29.32158}
+                    ],
+                    "DNCA Alpha Bonds": [
+                        {date:"2025-01-01",price:127.118},{date:"2025-12-31",price:129.2917},
+                        {date:"2026-04-16",price:130.52}
+                    ],
+                    "Sigma Internacional": [
+                        {date:"2025-01-01",price:18.5663},{date:"2025-12-31",price:18.8077},
+                        {date:"2026-04-16",price:19.81392}
+                    ]
+                };
+
+                localStorage.setItem('financialData', JSON.stringify({
+                    version: 9.0,
+                    portfolio,
+                    transactions,
+                    cash: cashAmount,
+                    banks: banksAmount,
+                    efectivo: efectivoAmount,
+                    historical: historicalData,
+                    priceHistory
+                }));
+
+                console.log('✅ PORTFOLIO MARCO: 9 activos | Rentabilidad fiscal: +1.21%');
+                renderAll();
+            } else {
+                // Cargar datos existentes (versión 3.0)
+                const data = JSON.parse(saved);
+                portfolio = data.portfolio || [];
+                transactions = data.transactions || [];
+                cashAmount = data.cash || 0;
+                banksAmount = data.banks || 0;
+                efectivoAmount = data.efectivo || 0;
+                historicalData = data.historical || [];
+                priceHistory = data.priceHistory || {};
+                renderAll();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('financialData', JSON.stringify({
+                version: 9.0,
+                portfolio,
+                transactions,
+                cash: cashAmount,
+                banks: banksAmount,
+                efectivo: efectivoAmount,
+                historical: historicalData,
+                priceHistory
+            }));
+        }
+
+        async function updateLivePrices() {
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = now.toLocaleTimeString('es-ES', {hour:'2-digit',minute:'2-digit'});
+
+            // 1. prices.json (mismo dominio, sin CORS — actualizado por GitHub Actions)
+            try {
+                const res = await fetch('./prices.json?t=' + Date.now());
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.prices) {
+                        let updated = 0;
+                        for (let asset of portfolio) {
+                            const key = asset.isin === 'BTC' ? 'BTC' : asset.isin;
+                            if (data.prices[key] && data.prices[key] > 0) {
+                                asset.current = data.prices[key];
+                                updated++;
+                            }
+                        }
+                        const statusEl = document.getElementById('fundUpdateStatus');
+                        if (statusEl && updated > 0) {
+                            statusEl.textContent = `✅ ${updated} precios actualizados (${data.updated})`;
+                            statusEl.style.color = 'var(--accent)';
+                            setTimeout(() => { statusEl.textContent = ''; }, 5000);
+                        }
+                        console.log(`📊 prices.json: ${updated} activos (${data.updated})`);
+                    }
+                    // Merge server-side history into local historicalData
+                    if (data.history && data.history.length > 0) {
+                        data.history.forEach(point => {
+                            const exists = historicalData.findIndex(p => p.date === point.date);
+                            if (exists >= 0) {
+                                historicalData[exists].amount = point.total;
+                            } else {
+                                historicalData.push({ date: point.date, amount: point.total });
+                            }
+                        });
+                        historicalData.sort((a, b) => new Date(a.date) - new Date(b.date));
+                        console.log(`📅 Historial sincronizado: ${data.history.length} puntos desde servidor`);
+                    }
+                }
+            } catch(e) {
+                console.warn('prices.json no disponible');
+            }
+
+            // 2. Bitcoin tiempo real via CoinGecko
+            try {
+                const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur');
+                const data = await res.json();
+                const btc = data.bitcoin?.eur;
+                if (btc) {
+                    const btcAsset = portfolio.find(a => a.isin === 'BTC' || a.ticker === 'BTC');
+                    if (btcAsset) { btcAsset.current = btc; console.log(`₿ Bitcoin: €${btc}`); }
+                }
+            } catch(e) { console.warn('Bitcoin no disponible'); }
+
+            saveData();
+            renderPortfolio();
+        }
+
+        // ── dummy loop para compatibilidad (ya no usado) ──
+        async function _unused_updateLivePrices_loop() {
+            for (let asset of portfolio) {
+                let price = null;
+                
+                // Bitcoin via CoinGecko
+                if (asset.isin === 'BTC' || asset.ticker === 'BTC') {
+                    try {
+                        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur');
+                        const data = await res.json();
+                        price = data.bitcoin?.eur;
+                        console.log(`Bitcoin actualizado: €${price}`);
+                    } catch(e) {
+                        console.warn('Bitcoin no disponible');
+                    }
+                }
+                // Any asset with ticker via Yahoo Finance
+                else if (asset.ticker) {
+                    try {
+                        const symbol = asset.ticker;
+                        const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`);
+                        const data = await res.json();
+                        
+                        if (data.chart?.result?.[0]) {
+                            price = data.chart.result[0].meta.regularMarketPrice;
+                            const currency = data.chart.result[0].meta.currency;
+                            
+                            // Convert to EUR if needed
+                            if (currency === 'USD') {
+                                price = price * 0.92; // USD to EUR
+                            } else if (currency === 'GBP' || symbol.endsWith('.L')) {
+                                price = price * 1.17; // GBP to EUR
+                            }
+                            console.log(`${asset.name} (${symbol}) actualizado: €${price.toFixed(2)}`);
+                        }
+                    } catch(e) {
+                        console.warn(`Precio ${asset.ticker} no disponible`);
+                    }
+                }
+                // Try Morningstar for Spanish funds (by ISIN)
+                else if (asset.isin && (asset.isin.startsWith('ES') || asset.isin.startsWith('LU'))) {
+                    try {
+                        // Morningstar API endpoint
+                        const morningstarUrl = `https://tools.morningstar.es/api/rest.svc/timeseries_price/2nhcdckzon?id=${asset.isin}&idtype=Isin&frequency=daily&outputType=JSON`;
+                        const res = await fetch(morningstarUrl);
+                        const data = await res.json();
+                        
+                        // Extract latest price from Morningstar response
+                        if (data && data[0] && data[0].TimeSeries && data[0].TimeSeries.Security) {
+                            const security = data[0].TimeSeries.Security[0];
+                            if (security.HistoryDetail && security.HistoryDetail.length > 0) {
+                                // Get the most recent price
+                                const latestData = security.HistoryDetail[security.HistoryDetail.length - 1];
+                                price = latestData.Value;
+                                console.log(`${asset.name} (Morningstar) actualizado: €${price.toFixed(2)}`);
+                            }
+                        }
+                    } catch(e) {
+                        console.warn(`Morningstar ${asset.isin} no disponible`);
+                    }
+                }
+                // Fallback: try ISIN mapping for backward compatibility
+                else if (asset.isin) {
+                    const symbols = {
+                        'IE000ZYRH0Q7': 'SWDA.L',
+                        'IE000QAZP7L2': 'EIMI.L',
+                        'IE00B4ND3602': 'IGLN.L'
+                    };
+                    const symbol = symbols[asset.isin];
+                    if (symbol) {
+                        try {
+                            const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`);
+                            const data = await res.json();
+                            price = data.chart?.result?.[0]?.meta?.regularMarketPrice;
+                            if (price && symbol.endsWith('.L')) price *= 1.17; // GBP to EUR
+                            console.log(`${asset.name} (Yahoo fallback) actualizado: €${price.toFixed(2)}`);
+                        } catch(e) {
+                            console.warn(`Precio ${asset.isin} no disponible`);
+                        }
+                    }
+                }
+                
+                if (price && price > 0) {
+                    asset.current = price;
+                }
+            }
+            
+            saveData();
+            renderPortfolio();
+        }
+
+        function renderAll() {
+            renderPortfolio();
+            renderFinances();
+            renderNetWorth();
+            renderHistorical();
+        }
+
+        function renderPortfolio() {
+            let totalValue = 0;
+            let totalInvested = 0;
+            const types = {};
+            
+            portfolio.forEach(a => {
+                const value = a.qty * a.current;
+                const invested = a.qty * a.buy;
+                totalValue += value;
+                totalInvested += invested;
+                types[a.type] = (types[a.type] || 0) + value;
+            });
+            
+            const profit = totalValue - totalInvested;
+            const profitPct = ((profit / totalInvested) * 100).toFixed(2);
+            
+            // Net worth in portfolio tab (with banks + cash + efectivo)
+            const netWorth = totalValue + cashAmount + banksAmount + efectivoAmount;
+            document.getElementById('netWorthPortfolio').textContent = `€${netWorth.toLocaleString('es-ES', {minimumFractionDigits:2})}`;
+            document.getElementById('netWorthBreakdown').textContent = `Inversiones + Bancos + Liquidez + Efectivo`;
+            
+            document.getElementById('totalValue').textContent = `€${totalValue.toLocaleString('es-ES', {minimumFractionDigits:2})}`;
+            document.getElementById('totalReturn').textContent = `€${profit.toLocaleString('es-ES', {minimumFractionDigits:2})}`;
+            document.getElementById('returnPct').textContent = `${profit>=0?'+':''}${profitPct}%`;
+            document.getElementById('returnPct').className = `card-change ${profit>=0?'positive':'negative'}`;
+            document.getElementById('totalChange').textContent = `${profit>=0?'+':''}${profitPct}%`;
+            document.getElementById('totalChange').className = `card-change ${profit>=0?'positive':'negative'}`;
+            
+            // Best asset
+            let best = portfolio[0];
+            // Calculate expected annual return based on portfolio composition
+            const expectedReturns = {
+                'Renta Variable': 8.5,
+                'Renta Fija': 3.5,
+                'Renta Mixta': 6.0,
+                'Oro': 4.0,
+                'Cripto': 15.0,
+                'Acciones': 10.0
+            };
+            
+            let weightedReturn = 0;
+            portfolio.forEach(a => {
+                const value = a.qty * a.current;
+                const weight = value / totalValue;
+                const assetReturn = expectedReturns[a.type] || 5.0;
+                weightedReturn += weight * assetReturn;
+            });
+            
+            document.getElementById('expectedReturn').textContent = `${weightedReturn.toFixed(2)}%`;
+            
+            // Table with delete button
+            const tbody = document.getElementById('portfolioBody');
+            tbody.innerHTML = '';
+            portfolio.forEach((a, i) => {
+                const value = a.qty * a.current;
+                const invested = a.qty * a.buy;
+                const profitEuros = value - invested;
+                const ret = ((a.current - a.buy) / a.buy) * 100;
+                
+                // Format quantity: show up to 6 decimals, remove trailing zeros
+                const qtyStr = a.qty.toFixed(6).replace(/\.?0+$/, '');
+                
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${a.name}</td>
+                    <td><span class="editable" onclick="editQty(${i})">${qtyStr}</span></td>
+                    <td>€${a.current.toLocaleString('es-ES',{minimumFractionDigits:2})}</td>
+                    <td>€${value.toLocaleString('es-ES',{minimumFractionDigits:2})}</td>
+                    <td class="${ret>=0?'positive':'negative'}">
+                        ${ret>=0?'+':''}${ret.toFixed(2)}%<br>
+                        <span style="font-size:0.85em;opacity:0.9">${profitEuros>=0?'+':''}€${profitEuros.toLocaleString('es-ES',{minimumFractionDigits:2})}</span>
+                    </td>
+                    <td><button class="btn-secondary" style="padding:0.25rem 0.5rem;font-size:0.75rem" onclick="deleteAsset(${i})">×</button></td>
+                `;
+            });
+            
+            // Chart 1: Investment Distribution (by asset type)
+            const ctx1 = document.getElementById('distributionChart');
+            if (charts.distribution) charts.distribution.destroy();
+            
+            const colors = ['#00ff88', '#00d4ff', '#a855f7', '#ffaa00', '#ff4466', '#10b981', '#f59e0b', '#ec4899'];
+            
+            const totalInv = Object.values(types).reduce((a, b) => a + b, 0);
+            const labelsWithPct = Object.keys(types).map((key, i) => {
+                const pct = ((types[key] / totalInv) * 100).toFixed(1);
+                return `${key} (${pct}%)`;
+            });
+            
+            charts.distribution = new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: labelsWithPct,
+                    datasets: [{
+                        data: Object.values(types),
+                        backgroundColor: colors,
+                        borderWidth: 0,
+                        spacing: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'right',
+                            labels: {
+                                color: '#e8edf4',
+                                font: { size: 12, weight: '600' },
+                                padding: 15,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.parsed;
+                                    return ` €${value.toLocaleString('es-ES', {minimumFractionDigits:2})}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Chart 2: Patrimonio Total (Inversiones + Bancos + Liquidez + Efectivo)
+            const ctx2 = document.getElementById('patrimonyChart');
+            if (charts.patrimony) charts.patrimony.destroy();
+            
+            const patrimonyData = {
+                'Inversiones': totalValue,
+                'Bancos': banksAmount,
+                'Liquidez': cashAmount,
+                'Efectivo': efectivoAmount
+            };
+            
+            const totalPat = Object.values(patrimonyData).reduce((a, b) => a + b, 0);
+            const patLabelsWithPct = Object.keys(patrimonyData).map((key) => {
+                const pct = ((patrimonyData[key] / totalPat) * 100).toFixed(1);
+                return `${key} (${pct}%)`;
+            });
+            
+            charts.patrimony = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: patLabelsWithPct,
+                    datasets: [{
+                        data: Object.values(patrimonyData),
+                        backgroundColor: ['#00ff88', '#00d4ff', '#ffaa00', '#ff4466'],
+                        borderWidth: 0,
+                        spacing: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'right',
+                            labels: {
+                                color: '#e8edf4',
+                                font: { size: 12, weight: '600' },
+                                padding: 15,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.parsed;
+                                    return ` €${value.toLocaleString('es-ES', {minimumFractionDigits:2})}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            document.getElementById('investments').textContent = `€${totalValue.toLocaleString('es-ES',{minimumFractionDigits:2})}`;
+            updateNetWorth();
+        }
+
+        function renderFinances() {
+            const now = new Date();
+            const thisMonth = now.toISOString().substring(0, 7); // YYYY-MM
+            const thisYear = now.getFullYear().toString();
+            
+            // Calculate this month and year totals
+            const incomeThisMonth = transactions.filter(t => t.type === 'income' && t.date.startsWith(thisMonth)).reduce((sum, t) => sum + t.amount, 0);
+            const expensesThisMonth = transactions.filter(t => t.type === 'expense' && t.date.startsWith(thisMonth)).reduce((sum, t) => sum + t.amount, 0);
+            const incomeThisYear = transactions.filter(t => t.type === 'income' && t.date.startsWith(thisYear)).reduce((sum, t) => sum + t.amount, 0);
+            const expensesThisYear = transactions.filter(t => t.type === 'expense' && t.date.startsWith(thisYear)).reduce((sum, t) => sum + t.amount, 0);
+            
+            document.getElementById('incomeThisMonth').textContent = `€${incomeThisMonth.toLocaleString('es-ES',{minimumFractionDigits:2})}`;
+            document.getElementById('expensesThisMonth').textContent = `€${expensesThisMonth.toLocaleString('es-ES',{minimumFractionDigits:2})}`;
+            document.getElementById('incomeThisYear').textContent = `€${incomeThisYear.toLocaleString('es-ES',{minimumFractionDigits:2})}`;
+            document.getElementById('expensesThisYear').textContent = `€${expensesThisYear.toLocaleString('es-ES',{minimumFractionDigits:2})}`;
+            
+            // Populate year selector
+            const years = [...new Set(transactions.map(t => t.date.substring(0, 4)))].sort().reverse();
+            const yearSelect = document.getElementById('yearSelector');
+            const currentYear = yearSelect.value || thisYear;
+            yearSelect.innerHTML = years.map(y => `<option value="${y}" ${y===currentYear?'selected':''}>${y}</option>`).join('');
+            
+            // Populate month selector
+            const monthSelect = document.getElementById('monthSelector');
+            const months = ['01-Ene','02-Feb','03-Mar','04-Abr','05-May','06-Jun','07-Jul','08-Ago','09-Sep','10-Oct','11-Nov','12-Dic'];
+            const currentMonth = monthSelect.value || thisMonth.substring(5);
+            monthSelect.innerHTML = months.map(m => {
+                const val = m.substring(0,2);
+                return `<option value="${val}" ${val===currentMonth?'selected':''}>${m.substring(3)}</option>`;
+            }).join('');
+            
+            // Filter by period
+            const periodType = document.getElementById('periodSelector').value;
+            let filtered = [...transactions];
+            let periodLabel = '';
+            
+            if (periodType === 'year') {
+                const year = yearSelect.value;
+                filtered = transactions.filter(t => t.date.startsWith(year));
+                periodLabel = year;
+                monthSelect.style.display = 'none';
+            } else if (periodType === 'month') {
+                const year = yearSelect.value;
+                const month = monthSelect.value;
+                filtered = transactions.filter(t => t.date.startsWith(`${year}-${month}`));
+                periodLabel = `${months.find(m => m.startsWith(month)).substring(3)} ${year}`;
+                monthSelect.style.display = 'block';
+            } else {
+                periodLabel = 'Total';
+                monthSelect.style.display = 'none';
+            }
+            
+            document.getElementById('periodLabel').textContent = periodLabel ? `(${periodLabel})` : '';
+            
+            // Calculate period totals
+            const periodIncome = filtered.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+            const periodExpenses = filtered.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+            const periodBalance = periodIncome - periodExpenses;
+            
+            document.getElementById('periodIncome').textContent = `€${periodIncome.toLocaleString('es-ES',{minimumFractionDigits:2})}`;
+            document.getElementById('periodExpenses').textContent = `€${periodExpenses.toLocaleString('es-ES',{minimumFractionDigits:2})}`;
+            document.getElementById('periodBalance').textContent = `€${periodBalance.toLocaleString('es-ES',{minimumFractionDigits:2})}`;
+            document.getElementById('periodBalance').className = periodBalance >= 0 ? 'positive' : 'negative';
+            
+            // Table
+            const tbody = document.getElementById('transactionsBody');
+            tbody.innerHTML = '';
+            [...filtered].reverse().forEach((t) => {
+                const originalIndex = transactions.indexOf(t);
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${new Date(t.date).toLocaleDateString('es-ES')}</td>
+                    <td>${t.concept}</td>
+                    <td>${t.type==='income'?'Ingreso':'Gasto'}</td>
+                    <td class="${t.type==='income'?'positive':'negative'}">${t.type==='income'?'+':'-'}€${t.amount.toLocaleString('es-ES',{minimumFractionDigits:2})}</td>
+                    <td><button class="btn-secondary" style="padding:0.25rem 0.5rem;font-size:0.75rem" onclick="deleteTransaction(${originalIndex})">×</button></td>
+                `;
+            });
+            
+            // Chart by month or year
+            const byPeriod = {};
+            transactions.forEach(t => {
+                const period = periodType === 'year' ? t.date.substring(0, 4) : t.date.substring(0, 7);
+                if (!byPeriod[period]) byPeriod[period] = {income:0, expense:0};
+                byPeriod[period][t.type] += t.amount;
+            });
+            
+            const periods = Object.keys(byPeriod).sort();
+            const ctx = document.getElementById('incomeExpensesChart');
+            if (charts.finances) charts.finances.destroy();
+            charts.finances = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: periods.map(p => periodType === 'year' ? p : p.substring(5)),
+                    datasets: [
+                        {
+                            label: 'Ingresos',
+                            data: periods.map(m => byPeriod[m].income),
+                            backgroundColor: '#00ff88'
+                        },
+                        {
+                            label: 'Gastos',
+                            data: periods.map(m => byPeriod[m].expense),
+                            backgroundColor: '#ff4466'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { labels: { color: '#8b95a8' } }
+                    },
+                    scales: {
+                        y: { ticks: { color: '#8b95a8' } },
+                        x: { ticks: { color: '#8b95a8' } }
+                    }
+                }
+            });
+        }
+
+        function renderNetWorth() {
+            updateNetWorth();
+            renderDetailedBreakdown();
+        }
+
+        function updateNetWorth() {
+            const totalValue = portfolio.reduce((sum, a) => sum + (a.qty * a.current), 0);
+            const netWorth = totalValue + cashAmount + banksAmount + efectivoAmount;
+            
+            document.getElementById('netWorth').textContent = `€${netWorth.toLocaleString('es-ES',{minimumFractionDigits:2})}`;
+            document.getElementById('cash').textContent = `€${cashAmount.toLocaleString('es-ES',{minimumFractionDigits:2})}`;
+            document.getElementById('banks').textContent = `€${banksAmount.toLocaleString('es-ES',{minimumFractionDigits:2})}`;
+            document.getElementById('efectivo').textContent = `€${efectivoAmount.toLocaleString('es-ES',{minimumFractionDigits:2})}`;
+        }
+
+        function renderDetailedBreakdown() {
+            const ctx = document.getElementById('detailedBreakdownChart');
+            if (!ctx) return; // Chart only exists in Patrimonio tab
+            
+            if (charts.detailedBreakdown) charts.detailedBreakdown.destroy();
+            
+            const totalValue = portfolio.reduce((sum, a) => sum + (a.qty * a.current), 0);
+            const netWorth = totalValue + cashAmount + banksAmount + efectivoAmount;
+            
+            // Show each individual asset + cash categories
+            const breakdown = {};
+            const labels = [];
+            const data = [];
+            const colors = [];
+            
+            // Color palette for assets
+            const assetColors = [
+                '#a855f7', // Purple
+                '#00ff88', // Green
+                '#00d4ff', // Cyan
+                '#ff4466', // Red
+                '#ffaa00', // Orange
+                '#10b981', // Emerald
+                '#f59e0b', // Amber
+                '#ec4899', // Pink
+                '#8b5cf6', // Violet
+                '#06b6d4', // Cyan-2
+                '#14b8a6', // Teal
+                '#f97316'  // Orange-2
+            ];
+            
+            // Add each asset individually
+            portfolio.forEach((asset, index) => {
+                const value = asset.qty * asset.current;
+                const pct = ((value / netWorth) * 100).toFixed(1);
+                labels.push(`${asset.name} (${pct}%)`);
+                data.push(value);
+                colors.push(assetColors[index % assetColors.length]);
+            });
+            
+            // Always add cash categories (even if 0) for complete view
+            const pctBancos = ((banksAmount / netWorth) * 100).toFixed(1);
+            labels.push(`Bancos (${pctBancos}%)`);
+            data.push(banksAmount);
+            colors.push('#3b82f6');
+            
+            const pctLiquidez = ((cashAmount / netWorth) * 100).toFixed(1);
+            labels.push(`Liquidez (${pctLiquidez}%)`);
+            data.push(cashAmount);
+            colors.push('#f59e0b');
+            
+            const pctEfectivo = ((efectivoAmount / netWorth) * 100).toFixed(1);
+            labels.push(`Efectivo (${pctEfectivo}%)`);
+            data.push(efectivoAmount);
+            colors.push('#ec4899');
+            
+            charts.detailedBreakdown = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 0,
+                        spacing: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'right',
+                            labels: {
+                                color: '#e8edf4',
+                                font: { size: 11, weight: '600' },
+                                padding: 12,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.parsed;
+                                    return ` €${value.toLocaleString('es-ES', {minimumFractionDigits:2})}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function editQty(index) {
+            const newQty = prompt('Nueva cantidad:', portfolio[index].qty);
+            if (newQty && !isNaN(newQty)) {
+                portfolio[index].qty = parseFloat(newQty);
+                saveData();
+                renderPortfolio();
+            }
+        }
+
+        function editCash() {
+            const newCash = prompt('Liquidez (€):', cashAmount);
+            if (newCash !== null && !isNaN(newCash)) {
+                cashAmount = parseFloat(newCash);
+                saveData();
+                renderPortfolio();
+                updateNetWorth();
+            }
+        }
+
+
+        function openModal(type) {
+            document.getElementById('modal').classList.add('active');
+            document.getElementById('modalTitle').textContent = type === 'income' ? 'Nuevo Ingreso' : 'Nuevo Gasto';
+            document.getElementById('transactionType').value = type;
+            document.getElementById('date').valueAsDate = new Date();
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+            document.getElementById('transactionForm').reset();
+        }
+
+        function saveTransaction(e) {
+            e.preventDefault();
+            transactions.push({
+                concept: document.getElementById('concept').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                date: document.getElementById('date').value,
+                type: document.getElementById('transactionType').value
+            });
+            saveData();
+            renderFinances();
+            closeModal();
+        }
+
+        function deleteTransaction(index) {
+            if (confirm('¿Eliminar esta transacción?')) {
+                transactions.splice(index, 1);
+                saveData();
+                renderFinances();
+            }
+        }
+
+        function uploadCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const lines = text.split('\n').filter(l => l.trim());
+                
+                // Skip header
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    // CSV format: Fecha,Concepto,Tipo,Importe
+                    // Or: Fecha,Concepto,Importe (auto-detect from amount sign)
+                    const parts = line.split(',').map(p => p.trim().replace(/"/g, ''));
+                    
+                    if (parts.length >= 3) {
+                        let date = parts[0];
+                        let concept = parts[1];
+                        let type = parts.length === 4 ? parts[2].toLowerCase() : '';
+                        let amount = parseFloat(parts[parts.length === 4 ? 3 : 2].replace('€', '').replace(',', '.'));
+                        
+                        // Auto-detect type from amount if not specified
+                        if (!type || (type !== 'income' && type !== 'expense' && type !== 'ingreso' && type !== 'gasto')) {
+                            if (amount < 0) {
+                                type = 'expense';
+                                amount = Math.abs(amount);
+                            } else {
+                                type = 'income';
+                            }
+                        } else {
+                            type = (type === 'ingreso' || type === 'income') ? 'income' : 'expense';
+                            amount = Math.abs(amount);
+                        }
+                        
+                        // Convert date to YYYY-MM-DD if needed
+                        if (date.includes('/')) {
+                            const [d, m, y] = date.split('/');
+                            date = `${y.length === 2 ? '20' + y : y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+                        }
+                        
+                        transactions.push({
+                            date,
+                            concept,
+                            type,
+                            amount
+                        });
+                    }
+                }
+                
+                saveData();
+                renderFinances();
+                alert(`Se importaron ${lines.length - 1} transacciones`);
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset input
+        }
+
+        function editBanks() {
+            const newBanks = prompt('Dinero en bancos (€):', banksAmount);
+            if (newBanks !== null && !isNaN(newBanks)) {
+                banksAmount = parseFloat(newBanks);
+                saveData();
+                renderPortfolio();
+                updateNetWorth();
+            }
+        }
+
+        function editEfectivo() {
+            const newEfectivo = prompt('Efectivo (€):', efectivoAmount);
+            if (newEfectivo !== null && !isNaN(newEfectivo)) {
+                efectivoAmount = parseFloat(newEfectivo);
+                saveData();
+                renderPortfolio();
+                updateNetWorth();
+            }
+        }
+
+        function openAddAssetModal() {
+            const name = prompt('Nombre del activo:');
+            if (!name) return;
+            
+            const type = prompt('Tipo:\n- Renta Variable\n- Renta Fija\n- Renta Mixta\n- Oro\n- Acciones\n- Cripto','Acciones');
+            const ticker = prompt('Ticker Yahoo Finance (ej: TSLA, AAPL, MSFT)\nDeja vacío si no cotiza:','');
+            const qty = prompt('Cantidad:', '1');
+            const buy = prompt('Precio de compra (€):', '0');
+            const current = prompt('Precio actual (€):', buy);
+            const isin = prompt('ISIN (opcional):','');
+            
+            if (qty && buy && current) {
+                portfolio.push({
+                    name,
+                    type: type || 'Acciones',
+                    qty: parseFloat(qty),
+                    buy: parseFloat(buy),
+                    current: parseFloat(current),
+                    isin: isin || '',
+                    ticker: ticker || ''
+                });
+                saveData();
+                renderPortfolio();
+                
+                if (ticker) {
+                    alert('Ticker añadido: ' + ticker + '\nSe actualizará automáticamente cada 5 min');
+                }
+            }
+        }
+
+        function deleteAsset(index) {
+            if (confirm(`¿Eliminar ${portfolio[index].name}?`)) {
+                portfolio.splice(index, 1);
+                saveData();
+                renderPortfolio();
+            }
+        }
+
+        function renderHistorical() {
+            // Sort by date
+            historicalData.sort((a, b) => new Date(a.date) - new Date(b.date));
+            renderAssetPerformance();
+            
+            // Render table
+            const tbody = document.getElementById('historicalBody');
+            tbody.innerHTML = '';
+            
+            historicalData.forEach((point, i) => {
+                const variation = i > 0 ? point.amount - historicalData[i-1].amount : 0;
+                const variationPct = i > 0 ? ((variation / historicalData[i-1].amount) * 100).toFixed(2) : 0;
+                
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${new Date(point.date).toLocaleDateString('es-ES')}</td>
+                    <td>€${point.amount.toLocaleString('es-ES',{minimumFractionDigits:2})}</td>
+                    <td class="${variation>=0?'positive':'negative'}">
+                        ${variation>=0?'+':''}€${Math.abs(variation).toLocaleString('es-ES',{minimumFractionDigits:2})} 
+                        ${i>0 ? `(${variation>=0?'+':''}${variationPct}%)` : ''}
+                    </td>
+                    <td><button class="btn-secondary" style="padding:0.25rem 0.5rem;font-size:0.75rem" onclick="deleteHistoricalPoint(${i})">×</button></td>
+                `;
+            });
+            
+            // Render chart
+            if (historicalData.length === 0) return;
+            
+            const ctx = document.getElementById('historicalChart');
+            if (charts.historical) charts.historical.destroy();
+            
+            const dates = historicalData.map(p => new Date(p.date).toLocaleDateString('es-ES', {month:'short', year:'numeric'}));
+            const amounts = historicalData.map(p => p.amount);
+            
+            charts.historical = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Patrimonio Total',
+                        data: amounts,
+                        borderColor: '#00ff88',
+                        backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` €${context.parsed.y.toLocaleString('es-ES', {minimumFractionDigits:2})}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                color: '#8b95a8',
+                                callback: function(value) {
+                                    return '€' + value.toLocaleString('es-ES', {maximumFractionDigits:0});
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(139, 149, 168, 0.1)'
+                            }
+                        },
+                        x: {
+                            ticks: { color: '#8b95a8' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function addHistoricalPoint() {
+            const totalValue = portfolio.reduce((sum, a) => sum + (a.qty * a.current), 0);
+            const netWorth = totalValue + cashAmount + banksAmount + efectivoAmount;
+            const today = new Date().toISOString().split('T')[0];
+            
+            // Check if already exists for today
+            const existsToday = historicalData.some(p => p.date === today);
+            if (existsToday) {
+                if (!confirm('Ya existe un registro para hoy. ¿Actualizar?')) return;
+                historicalData = historicalData.filter(p => p.date !== today);
+            }
+            
+            historicalData.push({
+                date: today,
+                amount: netWorth
+            });
+            
+            saveData();
+            renderHistorical();
+        }
+
+        function renderAssetPerformance() {
+            const card = document.getElementById('assetPerformanceCard');
+            if (!card) return;
+
+            const assets = portfolio.filter(a => priceHistory[a.name] && priceHistory[a.name].length > 0);
+            if (assets.length === 0) { card.style.display = 'none'; return; }
+            card.style.display = 'block';
+
+            const allDates = [...new Set(
+                assets.flatMap(a => priceHistory[a.name].map(p => p.date))
+            )].sort();
+
+            const colors = ['#00ff88','#00cfff','#ff6b6b','#ffd93d','#c77dff','#ff9f43','#48dbfb','#ff6348','#7bed9f','#eccc68'];
+
+            const datasets = assets.map((asset, idx) => {
+                const color = colors[idx % colors.length];
+                const data = allDates.map(date => {
+                    const entry = priceHistory[asset.name].find(p => p.date === date);
+                    if (!entry) return null;
+                    const base = (() => {
+                        const year = date.slice(0,4);
+                        const hist = priceHistory[asset.name];
+                        if (year === '2025') { const f = hist.filter(p=>p.date.startsWith('2025'))[0]; return f ? f.price : hist[0].price; }
+                        const prev = hist.filter(p=>p.date.startsWith(String(parseInt(year)-1))); return prev.length ? prev[prev.length-1].price : hist[0].price;
+                    })();
+                    return Math.round(((entry.price - base) / base * 100) * 100) / 100;
+                });
+                return {
+                    label: asset.name,
+                    data,
+                    borderColor: color,
+                    backgroundColor: color + '22',
+                    borderWidth: 2,
+                    pointRadius: 4,
+                    tension: 0.3,
+                    spanGaps: true
+                };
+            });
+
+            const labels = allDates.map(d => new Date(d).toLocaleDateString('es-ES', {month:'short', year:'numeric'}));
+
+            const ctx = document.getElementById('assetPerformanceChart');
+            if (charts.assetPerf) charts.assetPerf.destroy();
+            charts.assetPerf = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: { color: '#8b95a8', boxWidth: 12, font: { size: 11 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.raw === null) return null;
+                                    const asset = assets[context.datasetIndex];
+                                    const date = allDates[context.dataIndex];
+                                    const entry = priceHistory[asset.name]?.find(p => p.date === date);
+                                    if (!entry) return null;
+                                    const base = (() => { const year = date.slice(0,4); const hist = priceHistory[asset.name]; if (year==='2025'){const f=hist.filter(p=>p.date.startsWith('2025'))[0];return f?f.price:hist[0].price;} const prev=hist.filter(p=>p.date.startsWith(String(parseInt(year)-1)));return prev.length?prev[prev.length-1].price:hist[0].price; })();
+                                    const gain = (entry.price - base) * asset.qty;
+                                    const pct = context.raw;
+                                    const sign = pct >= 0 ? '+' : '';
+                                    const gainSign = gain >= 0 ? '+' : '';
+                                    return ` ${context.dataset.label}: ${sign}${pct.toFixed(2)}% (${gainSign}€${Math.abs(gain).toLocaleString('es-ES',{minimumFractionDigits:2})})`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                color: '#8b95a8',
+                                callback: v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%'
+                            },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        x: {
+                            ticks: { color: '#8b95a8', font: { size: 11 } },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        }
+                    }
+                }
+            });
+
+            const tableDiv = document.getElementById('assetPerformanceTable');
+            const lastDate = allDates[allDates.length - 1];
+            let tableHTML = '<table style="width:100%;font-size:0.85rem"><thead><tr>' +
+                '<th style="text-align:left;padding:0.4rem 0.5rem;color:var(--dim)">Activo</th>' +
+                '<th style="text-align:right;padding:0.4rem 0.5rem;color:var(--dim)">Rent. % (año)</th>' +
+                '<th style="text-align:right;padding:0.4rem 0.5rem;color:var(--dim)">Ganancia € (año)</th>' +
+                '<th style="text-align:right;padding:0.4rem 0.5rem;color:var(--dim)">Precio actual</th>' +
+                '</tr></thead><tbody>';
+
+            assets.forEach(asset => {
+                const lastEntry = priceHistory[asset.name]?.find(p => p.date === lastDate)
+                    || priceHistory[asset.name]?.[priceHistory[asset.name].length - 1];
+                if (!lastEntry) return;
+                const tBase = (() => { const year = lastEntry.date.slice(0,4); const hist = priceHistory[asset.name]; if (year==='2025'){const f=hist.filter(p=>p.date.startsWith('2025'))[0];return f?f.price:hist[0].price;} const prev=hist.filter(p=>p.date.startsWith(String(parseInt(year)-1)));return prev.length?prev[prev.length-1].price:hist[0].price; })();
+                const pct = (lastEntry.price - tBase) / tBase * 100;
+                const gain = (lastEntry.price - tBase) * asset.qty;
+                const cls = pct >= 0 ? '#00ff88' : '#ff4466';
+                const sign = pct >= 0 ? '+' : '';
+                tableHTML += `<tr>
+                    <td style="padding:0.4rem 0.5rem">${asset.name}</td>
+                    <td style="text-align:right;padding:0.4rem 0.5rem;color:${cls}">${sign}${pct.toFixed(2)}%</td>
+                    <td style="text-align:right;padding:0.4rem 0.5rem;color:${cls}">${sign}€${Math.abs(gain).toLocaleString('es-ES',{minimumFractionDigits:2})}</td>
+                    <td style="text-align:right;padding:0.4rem 0.5rem">€${lastEntry.price.toFixed(5)}</td>
+                </tr>`;
+            });
+            tableHTML += '</tbody></table>';
+            tableDiv.innerHTML = tableHTML;
+        }
+
+        function uploadHistoricalCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const lines = e.target.result.split('\n').filter(l => l.trim());
+                let added = 0, updated = 0;
+                for (let i = 1; i < lines.length; i++) {
+                    const parts = lines[i].split(/[,;]/).map(p => p.trim().replace(/"/g, ''));
+                    if (parts.length < 2) continue;
+                    const date = parts[0];
+                    const amount = parseFloat(parts[1].replace(',', '.').replace('€', ''));
+                    if (!date || isNaN(amount) || amount <= 0) continue;
+                    const existing = historicalData.findIndex(p => p.date === date);
+                    if (existing >= 0) { historicalData[existing].amount = amount; updated++; }
+                    else { historicalData.push({ date, amount }); added++; }
+                }
+                historicalData.sort((a, b) => new Date(a.date) - new Date(b.date));
+                saveData(); renderHistorical();
+                alert(`✅ CSV importado: ${added} añadidos, ${updated} actualizados`);
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function exportHistoricalCSV() {
+            const sorted = [...historicalData].sort((a, b) => new Date(a.date) - new Date(b.date));
+            let csv = 'Fecha,Total\n';
+            sorted.forEach(p => { csv += `${p.date},${p.amount.toFixed(2)}\n`; });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'historial_evolucion.csv';
+            a.click();
+        }
+
+        function addManualPoint() {
+            const date = prompt('Fecha (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
+            if (!date) return;
+            
+            const amount = prompt('Patrimonio total (€):');
+            if (!amount || isNaN(amount)) return;
+            
+            historicalData.push({
+                date: date,
+                amount: parseFloat(amount)
+            });
+            
+            saveData();
+            renderHistorical();
+        }
+
+        function deleteHistoricalPoint(index) {
+            if (confirm('¿Eliminar este registro?')) {
+                historicalData.splice(index, 1);
+                saveData();
+                renderHistorical();
+            }
+        }
+
+        function uploadPortfolioCSV(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const lines = text.split('\n').filter(l => l.trim());
+                
+                let updated = 0;
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    const parts = line.split(/[,;]/).map(p => p.trim().replace(/"/g, ''));
+                    if (parts.length < 3) continue;
+                    
+                    // Format: Activo,ISIN,Valor actual (€)
+                    const isin = parts[1];
+                    let price = parts[2].replace('€', '').replace(',', '.');
+                    price = parseFloat(price);
+                    
+                    if (!isin || isNaN(price) || price <= 0) continue;
+                    
+                    // Find and update asset by ISIN
+                    const asset = portfolio.find(a => a.isin === isin);
+                    if (asset) {
+                        asset.current = price;
+                        updated++;
+                    }
+                }
+                
+                saveData();
+                renderPortfolio();
+                alert(`✅ Actualizados ${updated} activos desde CSV`);
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        async function updateFundPrices() {
+            const fundsToUpdate = portfolio.filter(a => 
+                !a.ticker && a.isin && a.isin !== 'BTC'
+            );
+            
+            if (fundsToUpdate.length === 0) {
+                showFundStatus('No hay fondos para actualizar');
+                return;
+            }
+            
+            const btn = document.getElementById('updateFundsBtn');
+            const status = document.getElementById('fundUpdateStatus');
+            
+            btn.disabled = true;
+            btn.textContent = '⏳ Actualizando...';
+            
+            let updated = 0;
+            for (let i = 0; i < fundsToUpdate.length; i++) {
+                const fund = fundsToUpdate[i];
+                status.textContent = `Actualizando ${i + 1}/${fundsToUpdate.length}: ${fund.name}...`;
+                
+                try {
+                    const price = await fetchFundPrice(fund.isin);
+                    if (price && price > 0) {
+                        fund.current = price;
+                        updated++;
+                        savePriceToHistory(fund.name, price);
+                    }
+                } catch(e) {
+                    console.error(`Error updating ${fund.name}:`, e);
+                }
+            }
+            
+            saveData();
+            renderPortfolio();
+            
+            btn.disabled = false;
+            btn.textContent = '🔄 Actualizar Fondos';
+            status.textContent = `✅ Actualizados ${updated} de ${fundsToUpdate.length} fondos`;
+            status.style.color = updated > 0 ? 'var(--accent)' : 'var(--red)';
+            
+            // Clear status after 5 seconds
+            setTimeout(() => {
+                status.textContent = '';
+            }, 5000);
+        }
+
+        function showFundStatus(message) {
+            const status = document.getElementById('fundUpdateStatus');
+            status.textContent = message;
+            status.style.color = 'var(--dim)';
+            setTimeout(() => {
+                status.textContent = '';
+            }, 3000);
+        }
+
+        async function fetchFundPrice(isin) {
+            // Try Morningstar via CORS proxy
+            try {
+                const proxy = 'https://api.allorigins.win/raw?url=';
+                const url = `https://www.morningstar.es/es/funds/snapshot/snapshot.aspx?id=${isin}`;
+                
+                const res = await fetch(proxy + encodeURIComponent(url));
+                const html = await res.text();
+                
+                // Try different patterns
+                const patterns = [
+                    /Valor liquidativo.*?([0-9]+,[0-9]+)/,
+                    /VL.*?([0-9]+,[0-9]+)/,
+                    /NAV.*?([0-9]+\.[0-9]+)/
+                ];
+                
+                for (let pattern of patterns) {
+                    const match = html.match(pattern);
+                    if (match) {
+                        return parseFloat(match[1].replace(',', '.'));
+                    }
+                }
+            } catch(e) {
+                console.warn('Morningstar no disponible');
+            }
+            
+            return null;
+        }
+
+        // Auto-register all prices silently (no alert, for scheduled tasks)
+        async function autoRegisterAllPrices() {
+            console.log('📸 Auto-registrando precios de cierre del día...');
+            await updateLivePrices();
+            const today = new Date().toISOString().split('T')[0];
+            let registered = 0;
+            portfolio.forEach(asset => {
+                if (asset.current && asset.current > 0) {
+                    if (!priceHistory[asset.name]) priceHistory[asset.name] = [];
+                    const existingIndex = priceHistory[asset.name].findIndex(p => p.date === today);
+                    if (existingIndex >= 0) {
+                        priceHistory[asset.name][existingIndex].price = asset.current;
+                    } else {
+                        priceHistory[asset.name].push({ date: today, price: asset.current });
+                    }
+                    priceHistory[asset.name].sort((a, b) => new Date(a.date) - new Date(b.date));
+                    registered++;
+                }
+            });
+            if (registered > 0) {
+                saveData();
+                console.log(`✅ Auto-registrados ${registered} precios de cierre para ${today}`);
+                const status = document.getElementById('fundUpdateStatus');
+                if (status) {
+                    const now = new Date();
+                    status.textContent = `✅ Snapshot diario guardado a las ${now.toLocaleTimeString('es-ES', {hour:'2-digit',minute:'2-digit'})} (${registered} activos)`;
+                    status.style.color = 'var(--accent)';
+                    setTimeout(() => { status.textContent = 'Próximo snapshot automático: mañana 23:55'; status.style.color = 'var(--dim)'; }, 8000);
+                }
+            }
+        }
+
+        // Schedule daily fund updates at 23:00 + full price snapshot at 23:55
+        function scheduleDailyFundUpdate() {
+            const now = new Date();
+            
+            // --- Fund update at 23:00 ---
+            const targetFunds = new Date();
+            targetFunds.setHours(23, 0, 0, 0);
+            if (now > targetFunds) targetFunds.setDate(targetFunds.getDate() + 1);
+            setTimeout(() => {
+                console.log('Ejecutando actualización automática de fondos...');
+                updateFundPrices();
+                setInterval(() => { updateFundPrices(); }, 24 * 60 * 60 * 1000);
+            }, targetFunds - now);
+            
+            // --- Full price snapshot at 23:55 (fondos, ETFs, acciones, cripto) ---
+            const targetSnapshot = new Date();
+            targetSnapshot.setHours(23, 55, 0, 0);
+            if (now > targetSnapshot) targetSnapshot.setDate(targetSnapshot.getDate() + 1);
+            setTimeout(() => {
+                autoRegisterAllPrices();
+                setInterval(autoRegisterAllPrices, 24 * 60 * 60 * 1000);
+            }, targetSnapshot - now);
+            
+            const nextSnapshotStr = targetSnapshot.toLocaleString('es-ES', {
+                day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+            });
+            console.log(`✅ Snapshot diario automático programado para: ${nextSnapshotStr}`);
+            setTimeout(() => {
+                const status = document.getElementById('fundUpdateStatus');
+                if (status) {
+                    status.textContent = `📅 Snapshot auto programado: ${nextSnapshotStr}`;
+                    status.style.color = 'var(--dim)';
+                }
+            }, 1000);
+        }
+
+        // Start daily schedule on load
+        window.addEventListener('load', scheduleDailyFundUpdate);
+
+        function switchTab(index) {
+            document.querySelectorAll('.tab').forEach((t, i) => {
+                t.classList.toggle('active', i === index);
+            });
+            document.querySelectorAll('.tab-content').forEach((c, i) => {
+                c.classList.toggle('active', i === index);
+            });
+            if (index === 4) {
+                renderEvolutionTab();
+            }
+        }
+
+        
+        // ===== PRICE HISTORY & EVOLUTION =====
+        
+        function deletePriceEntry(assetName, date) {
+            if (!priceHistory[assetName]) return;
+            priceHistory[assetName] = priceHistory[assetName].filter(p => p.date !== date);
+            if (priceHistory[assetName].length === 0) delete priceHistory[assetName];
+            saveData();
+            renderEvolutionTab();
+        }
+
+        function savePriceToHistory(assetName, price) {
+            const today = new Date().toISOString().split('T')[0];
+            if (!priceHistory[assetName]) {
+                priceHistory[assetName] = [];
+            }
+            const existingIndex = priceHistory[assetName].findIndex(p => p.date === today);
+            if (existingIndex >= 0) {
+                priceHistory[assetName][existingIndex].price = price;
+            } else {
+                priceHistory[assetName].push({ date: today, price: price });
+            }
+            priceHistory[assetName].sort((a, b) => new Date(a.date) - new Date(b.date));
+            saveData();
+        }
+        
+        function saveQuickPrice() {
+            const assetName = document.getElementById('quickPriceAsset').value;
+            const date = document.getElementById('quickPriceDate').value;
+            const price = parseFloat(document.getElementById('quickPriceValue').value);
+            
+            if (!assetName) {
+                alert('❌ Selecciona un activo');
+                return;
+            }
+            if (!date) {
+                alert('❌ Selecciona una fecha');
+                return;
+            }
+            if (!price || price <= 0) {
+                alert('❌ Introduce un precio válido');
+                return;
+            }
+            
+            if (!priceHistory[assetName]) {
+                priceHistory[assetName] = [];
+            }
+            
+            const existingIndex = priceHistory[assetName].findIndex(p => p.date === date);
+            if (existingIndex >= 0) {
+                priceHistory[assetName][existingIndex].price = price;
+            } else {
+                priceHistory[assetName].push({ date: date, price: price });
+            }
+            
+            priceHistory[assetName].sort((a, b) => new Date(a.date) - new Date(b.date));
+            saveData();
+            
+            // Clear form
+            document.getElementById('quickPriceValue').value = '';
+            
+            // Refresh charts
+            renderEvolutionTab();
+            
+            alert(`✅ Precio guardado!\n${assetName}\n${date}: €${price.toFixed(2)}`);
+        }
+        
+        function registerTodayPrices() {
+            const today = new Date().toISOString().split('T')[0];
+            let registered = 0;
+            
+            portfolio.forEach(asset => {
+                if (asset.current && asset.current > 0) {
+                    if (!priceHistory[asset.name]) {
+                        priceHistory[asset.name] = [];
+                    }
+                    
+                    const existingIndex = priceHistory[asset.name].findIndex(p => p.date === today);
+                    if (existingIndex >= 0) {
+                        priceHistory[asset.name][existingIndex].price = asset.current;
+                    } else {
+                        priceHistory[asset.name].push({ date: today, price: asset.current });
+                    }
+                    
+                    priceHistory[asset.name].sort((a, b) => new Date(a.date) - new Date(b.date));
+                    registered++;
+                }
+            });
+            
+            if (registered > 0) {
+                saveData();
+                renderEvolutionTab();
+                alert(`✅ Registrados ${registered} precios para el ${new Date(today).toLocaleDateString('es-ES')}!`);
+            } else {
+                alert('❌ No hay precios actuales para registrar');
+            }
+        }
+        
+        function importPriceHistory(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const text = e.target.result;
+                    const lines = text.split('\n');
+                    
+                    // Skip header
+                    let imported = 0;
+                    for (let i = 1; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (!line) continue;
+                        
+                        const parts = line.split(',');
+                        if (parts.length !== 3) continue;
+                        
+                        const assetName = parts[0].trim();
+                        const date = parts[1].trim();
+                        const price = parseFloat(parts[2].trim());
+                        
+                        if (!assetName || !date || !price || price <= 0) continue;
+                        
+                        // Check if asset exists
+                        const assetExists = portfolio.some(a => a.name === assetName);
+                        if (!assetExists) continue;
+                        
+                        if (!priceHistory[assetName]) {
+                            priceHistory[assetName] = [];
+                        }
+                        
+                        const existingIndex = priceHistory[assetName].findIndex(p => p.date === date);
+                        if (existingIndex >= 0) {
+                            priceHistory[assetName][existingIndex].price = price;
+                        } else {
+                            priceHistory[assetName].push({ date: date, price: price });
+                        }
+                        imported++;
+                    }
+                    
+                    // Sort all histories
+                    for (const name in priceHistory) {
+                        priceHistory[name].sort((a, b) => new Date(a.date) - new Date(b.date));
+                    }
+                    
+                    saveData();
+                    renderEvolutionTab();
+                    alert(`✅ Importados ${imported} precios desde CSV!`);
+                    
+                } catch (error) {
+                    alert('❌ Error al importar CSV: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+            
+            // Reset file input
+            event.target.value = '';
+        }
+        
+        function exportPriceHistory() {
+            if (Object.keys(priceHistory).length === 0) {
+                alert('No hay historial para exportar');
+                return;
+            }
+            const csv = ['Activo,Fecha,Precio'];
+            for (const [name, history] of Object.entries(priceHistory)) {
+                history.forEach(r => csv.push(`${name},${r.date},${r.price}`));
+            }
+            const blob = new Blob([csv.join('\n')], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `historial-precios-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            alert('✅ Historial exportado');
+        }
+        
+        function renderEvolutionTab() {
+            const container = document.getElementById('evolutionCharts');
+            if (!container) return;
+            
+            // Populate asset selector
+            const selector = document.getElementById('quickPriceAsset');
+            if (selector && selector.options.length <= 1) {
+                portfolio.forEach(asset => {
+                    const option = document.createElement('option');
+                    option.value = asset.name;
+                    option.textContent = asset.name;
+                    selector.appendChild(option);
+                });
+                // Set today's date
+                const dateInput = document.getElementById('quickPriceDate');
+                if (dateInput && !dateInput.value) {
+                    dateInput.value = new Date().toISOString().split('T')[0];
+                }
+            }
+            
+            container.innerHTML = '';
+            
+            if (Object.keys(priceHistory).length === 0) {
+                container.innerHTML = `
+                    <div class="card">
+                        <div style="text-align:center;padding:2rem">
+                            <h3 style="margin-bottom:1rem">📊 Sin historial de precios</h3>
+                            <p style="color:var(--dim);margin-bottom:1rem">
+                                Añade precios usando el formulario de arriba para ver gráficos de evolución.
+                            </p>
+                            <p style="color:var(--dim);font-size:0.875rem">
+                                Tip: Añade al menos 2 precios con fechas diferentes para ver el gráfico.
+                            </p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            let hasCharts = false;
+            
+            portfolio.forEach((asset, index) => {
+                const history = priceHistory[asset.name] || [];
+                
+                if (history.length === 0) return;
+                
+                hasCharts = true;
+                
+                const invested = asset.qty * asset.buy;
+                const currentValue = asset.qty * asset.current;
+                const profit = currentValue - invested;
+                const profitPct = (profit / invested * 100);
+                const firstPrice = history[0].price;
+                const lastPrice = history[history.length - 1].price;
+                const periodChange = ((lastPrice - firstPrice) / firstPrice * 100);
+                
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.style.marginBottom = '1.5rem';
+                card.innerHTML = `
+                    <div style="display:flex;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:1rem">
+                        <div>
+                            <h3 style="margin:0 0 0.5rem 0">${asset.name}</h3>
+                            <div style="font-size:0.875rem;color:var(--dim)">
+                                ${history.length} registro${history.length > 1 ? 's' : ''} • 
+                                ${new Date(history[0].date).toLocaleDateString('es-ES')} → 
+                                ${new Date(history[history.length - 1].date).toLocaleDateString('es-ES')}
+                            </div>
+                        </div>
+                        <div class="${profitPct >= 0 ? 'positive' : 'negative'}" style="font-size:1.5rem;font-weight:700">
+                            ${profitPct >= 0 ? '+' : ''}${profitPct.toFixed(2)}%
+                        </div>
+                    </div>
+                    <canvas id="evolutionChart${index}" style="margin-bottom:1rem;max-height:300px"></canvas>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem;font-size:0.875rem">
+                        <div>
+                            <div style="color:var(--dim)">Primer Precio</div>
+                            <div style="font-weight:600">€${firstPrice.toFixed(2)}</div>
+                            <div style="color:var(--dim);font-size:0.75rem">${new Date(history[0].date).toLocaleDateString('es-ES')}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--dim)">Último Precio</div>
+                            <div style="font-weight:600">€${lastPrice.toFixed(2)}</div>
+                            <div style="color:var(--dim);font-size:0.75rem">${new Date(history[history.length - 1].date).toLocaleDateString('es-ES')}</div>
+                        </div>
+                        <div>
+                            <div style="color:var(--dim)">Cambio</div>
+                            <div class="${periodChange >= 0 ? 'positive' : 'negative'}" style="font-weight:600">
+                                ${periodChange >= 0 ? '+' : ''}${periodChange.toFixed(2)}%
+                            </div>
+                        </div>
+                        <div>
+                            <div style="color:var(--dim)">Valor Total</div>
+                            <div style="font-weight:600">€${currentValue.toLocaleString('es-ES',{minimumFractionDigits:2})}</div>
+                        </div>
+                    </div>
+                    <details style="margin-top:1rem">
+                        <summary style="cursor:pointer;color:var(--dim);font-size:0.85rem;user-select:none;padding:0.5rem 0">
+                            🗂 Ver/editar ${history.length} precio${history.length !== 1 ? 's' : ''} registrado${history.length !== 1 ? 's' : ''}
+                        </summary>
+                        <div style="margin-top:0.75rem;display:flex;flex-direction:column;gap:0.4rem;max-height:200px;overflow-y:auto">
+                            ${history.slice().reverse().map(entry => `
+                                <div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0.6rem;background:rgba(255,255,255,0.04);border-radius:6px;font-size:0.85rem">
+                                    <span style="color:var(--dim)">${new Date(entry.date + 'T12:00:00').toLocaleDateString('es-ES', {day:'2-digit',month:'short',year:'numeric'})}</span>
+                                    <span style="font-weight:600">€${parseFloat(entry.price).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:4})}</span>
+                                    <button onclick="deletePriceEntry('${asset.name.replace(/'/g, "\\'")}', '${entry.date}')" style="background:rgba(255,68,102,0.15);border:none;color:#ff4466;padding:0.2rem 0.5rem;border-radius:4px;cursor:pointer;font-size:0.8rem" title="Borrar este precio">🗑</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </details>
+                `;
+                container.appendChild(card);
+                setTimeout(() => renderAssetChart(index, asset, history), 100);
+            });
+            
+            // Combined chart of all assets
+            if (hasCharts) {
+                const assetsWithHistory = portfolio.filter(a => priceHistory[a.name] && priceHistory[a.name].length >= 2);
+                if (assetsWithHistory.length >= 2) {
+                    const combinedCard = document.createElement('div');
+                    combinedCard.className = 'card';
+                    combinedCard.style.marginBottom = '1.5rem';
+                    combinedCard.innerHTML = `
+                        <h3 style="margin:0 0 0.5rem 0">📊 Evolución Conjunta (% variación)</h3>
+                        <p style="color:var(--dim);font-size:0.85rem;margin:0 0 1rem 0">Todos los activos normalizados desde el primer precio registrado</p>
+                        <canvas id="combinedEvolutionChart" style="max-height:350px"></canvas>
+                    `;
+                    container.appendChild(combinedCard);
+                    setTimeout(() => renderCombinedChart(assetsWithHistory), 150);
+                }
+            }
+            
+            if (!hasCharts) {
+                container.innerHTML = `
+                    <div class="card">
+                        <div style="text-align:center;padding:2rem">
+                            <p style="color:var(--dim)">Añade precios para los activos usando el formulario de arriba.</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        function renderCombinedChart(assetsWithHistory) {
+            const ctx = document.getElementById('combinedEvolutionChart');
+            if (!ctx) return;
+            if (charts['combined']) charts['combined'].destroy();
+            
+            const colors = ['#00ff88','#00d4ff','#a855f7','#ffaa00','#ff4466','#10b981','#f59e0b','#ec4899','#60a5fa'];
+            
+            // Collect all unique dates across all assets
+            const allDates = new Set();
+            assetsWithHistory.forEach(a => {
+                (priceHistory[a.name] || []).forEach(p => allDates.add(p.date));
+            });
+            const sortedDates = Array.from(allDates).sort();
+            
+            const datasets = assetsWithHistory.map((asset, i) => {
+                const history = priceHistory[asset.name] || [];
+                const histMap = {};
+                history.forEach(p => histMap[p.date] = p.price);
+                const firstPrice = history[0].price;
+                
+                // Build % change series, carrying last known price forward
+                let lastKnown = null;
+                const values = sortedDates.map(date => {
+                    if (histMap[date] !== undefined) lastKnown = histMap[date];
+                    if (lastKnown === null) return null;
+                    return parseFloat(((lastKnown - firstPrice) / firstPrice * 100).toFixed(2));
+                });
+                
+                return {
+                    label: asset.name.split(' ')[0],
+                    data: values,
+                    borderColor: colors[i % colors.length],
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    pointRadius: sortedDates.length > 30 ? 0 : 3,
+                    pointHoverRadius: 5,
+                    pointBackgroundColor: colors[i % colors.length],
+                    spanGaps: true
+                };
+            });
+            
+            const labels = sortedDates.map(d => {
+                const dt = new Date(d + 'T12:00:00');
+                return dt.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: '2-digit' });
+            });
+            
+            charts['combined'] = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 2,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: { color: '#e8edf4', usePointStyle: true, pointStyle: 'circle', padding: 12, font: { size: 11 } }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(26,31,46,0.97)',
+                            titleColor: '#e8edf4',
+                            bodyColor: '#e8edf4',
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                label: ctx => {
+                                    const v = ctx.parsed.y;
+                                    if (v === null) return null;
+                                    return ` ${ctx.dataset.label}: ${v >= 0 ? '+' : ''}${v.toFixed(2)}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#8b95a8', maxRotation: 45, minRotation: 45, font: { size: 10 } }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: {
+                                color: '#8b95a8',
+                                callback: v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderAssetChart(index, asset, history) {
+            const ctx = document.getElementById(`evolutionChart${index}`);
+            if (!ctx) return;
+            
+            if (charts[`evo${index}`]) {
+                charts[`evo${index}`].destroy();
+            }
+            
+            const labels = history.map(h => {
+                const d = new Date(h.date);
+                return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: '2-digit' });
+            });
+            const values = history.map(h => h.price * asset.qty);
+            const prices = history.map(h => h.price);
+            
+            charts[`evo${index}`] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Valor Inversión',
+                        data: values,
+                        borderColor: '#00ff88',
+                        backgroundColor: 'rgba(0,255,136,0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#00ff88',
+                        pointBorderColor: '#1a1f2e',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 2.5,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(26, 31, 46, 0.95)',
+                            titleColor: '#e8edf4',
+                            bodyColor: '#e8edf4',
+                            borderColor: '#00ff88',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                title: (items) => {
+                                    const date = history[items[0].dataIndex].date;
+                                    return new Date(date).toLocaleDateString('es-ES', { 
+                                        weekday: 'short',
+                                        year: 'numeric', 
+                                        month: 'long', 
+                                        day: 'numeric' 
+                                    });
+                                },
+                                label: (context) => {
+                                    const val = context.parsed.y;
+                                    const p = prices[context.dataIndex];
+                                    return [
+                                        `Valor: €${val.toLocaleString('es-ES', {minimumFractionDigits:2})}`,
+                                        `Precio: €${p.toLocaleString('es-ES', {minimumFractionDigits:2})}`,
+                                        `Cantidad: ${asset.qty.toFixed(4)}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { 
+                                color: '#8b95a8',
+                                maxRotation: 45,
+                                minRotation: 45,
+                                font: { size: 10 }
+                            }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { 
+                                color: '#8b95a8',
+                                callback: (val) => '€' + val.toLocaleString('es-ES', {maximumFractionDigits:0})
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+    </script>
+</body>
+</html>
